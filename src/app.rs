@@ -1,7 +1,8 @@
+use std::collections::hash_map::DefaultHasher;
 use std::fs::{File, metadata};
+use std::hash::{Hasher, Hash};
 use std::io::Read;
-use std::path::Path;
-
+use std::path::{PathBuf, Path};
 
 pub struct Application;
 
@@ -15,9 +16,9 @@ impl Application {
             Ok(path) => path,
             Err(error) => panic!("{}", error)
         };
-        println!("{}", dir);
-        
 
+        let temp = String::from("folder");
+        Application::create_snaps_folder(&dir, &temp).unwrap();
     }
 
     fn config_file() -> File {
@@ -87,7 +88,7 @@ impl Application {
                         Ok(mdata) => {
                             match mdata.is_dir() {
 
-                                true => Ok(String::from(dir_path)),
+                                true  => Ok(String::from(dir_path)),
                                 false => Ok(String::from("."))
                             }
                         },
@@ -97,5 +98,14 @@ impl Application {
             },
             Err(error) => Err(error)
         }
+    }
+
+    fn create_snaps_folder(work_dir: &String, snap_folder_path: &String) -> std::io::Result<()> {
+
+        let mut hasher = DefaultHasher::default();
+        snap_folder_path.hash(&mut hasher);
+        let hash_r = hasher.finish();
+        let complete_path = Path::new(work_dir.as_str()).join(hash_r.to_string());
+        std::fs::create_dir(complete_path)
     }
 }
