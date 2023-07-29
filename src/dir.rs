@@ -1,3 +1,6 @@
+use std::ffi::OsString;
+use std::fs::{ReadDir, read_dir};
+
 
 #[derive(Debug, Clone)]
 enum DirEntryFiles {
@@ -41,4 +44,26 @@ impl DirEntryFiles {
             }
         }
     }
+}
+
+fn collect_files(dir_path: ReadDir, dir_entry: &mut DirEntryFiles) {
+
+    dir_path.map(|entity_res| {
+        match entity_res {
+            Ok(entity) => {
+
+                if entity.metadata().unwrap().is_file() == true {
+
+                    dir_entry.add_file_to_dir((entity.file_name(), entity.metadata().unwrap().len()));
+                } else {
+
+                    let mut next_dir = DirEntryFiles::new_dir(entity.file_name());
+                    collect_files(read_dir(entity.path()).expect("Read file Error"), 
+                                    &mut next_dir);
+                    dir_entry.add_dir_to_dir(next_dir);
+                }
+            },
+            Err(_) => {}
+        }
+    }).collect()    
 }
