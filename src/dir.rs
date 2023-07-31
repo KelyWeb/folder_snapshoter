@@ -1,8 +1,11 @@
 use std::ffi::OsString;
-use std::fs::{ReadDir, read_dir};
+use std::fs::{ReadDir, read_dir, File};
+use std::io::{Write, Read};
+use serde::{Serialize, Deserialize};
+use serde_json::{Result, Value};
 
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub enum DirEntryFiles {
     File(OsString, u64),
     Dir {
@@ -73,6 +76,24 @@ impl DirEntryFiles {
                 }
             }
         }
+    }
+
+    pub fn write_to_file(&self, file: &mut File) {
+
+        let serialized = serde_json::to_string(self)
+                                            .expect("Serialize DirEntryFiles Error");
+        match file.write_all(serialized.as_bytes()) {
+            Err(error) => panic!("{}", error),
+            _ => {}
+        }
+    }
+    pub fn read_from_file(file: &mut File) -> DirEntryFiles {
+
+        let mut read_buffer = String::new();
+        file.read_to_string(&mut read_buffer)
+            .expect("File read error");
+        let deser_obj: DirEntryFiles = serde_json::from_str(read_buffer.as_str()).unwrap();
+        deser_obj
     }
 }
 
