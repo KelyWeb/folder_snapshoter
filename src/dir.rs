@@ -3,7 +3,7 @@ use std::fs::{ReadDir, read_dir};
 
 
 #[derive(Debug, Clone)]
-enum DirEntryFiles {
+pub enum DirEntryFiles {
     File(OsString, u64),
     Dir {
         name: OsString,
@@ -13,16 +13,16 @@ enum DirEntryFiles {
 
 impl DirEntryFiles {
 
-    fn new_dir(dir_name: OsString) -> DirEntryFiles {
+    pub fn new_dir(dir_name: OsString) -> DirEntryFiles {
 
         DirEntryFiles::Dir { name: dir_name, files: Vec::new() }
     }
-    fn new_file(file_name: OsString, file_size: u64) -> DirEntryFiles {
+    pub fn new_file(file_name: OsString, file_size: u64) -> DirEntryFiles {
 
         DirEntryFiles::File(file_name, file_size)
     }
 
-    fn add_file_to_dir(&mut self, file_metadata: (std::ffi::OsString, u64)) {
+    pub fn add_file_to_dir(&mut self, file_metadata: (std::ffi::OsString, u64)) {
 
         match *self {
 
@@ -33,7 +33,7 @@ impl DirEntryFiles {
             }
         }
     }
-    fn add_dir_to_dir(&mut self, dir: DirEntryFiles) {
+    pub fn add_dir_to_dir(&mut self, dir: DirEntryFiles) {
 
         match *self {
 
@@ -44,9 +44,39 @@ impl DirEntryFiles {
             }
         }
     }
+
+    pub fn debug_files(&self, spaces: usize, sticks: usize) {
+
+        match *self {
+            DirEntryFiles::File(ref name, ref size) => {
+                for space in 0..spaces {
+                    print!(" ");
+                }
+                print!("|");
+                for stick in 0..sticks {
+                    print!("-");
+                }
+                println!("{} {}", name.to_str().unwrap(), size);
+            },
+            DirEntryFiles::Dir { ref name, ref files } => {
+                for space in 0..spaces {
+                    print!(" ");
+                }
+                print!("|");
+                for stick in 0..sticks {
+                    print!("-");
+                }
+                println!("{}", name.to_str().unwrap());
+                for next_file in files {
+
+                    next_file.debug_files(spaces + sticks, sticks + 3);
+                }
+            }
+        }
+    }
 }
 
-fn collect_files(dir_path: ReadDir, dir_entry: &mut DirEntryFiles) {
+pub fn collect_files(dir_path: ReadDir, dir_entry: &mut DirEntryFiles) {
 
     dir_path.map(|entity_res| {
         match entity_res {
