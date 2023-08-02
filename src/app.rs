@@ -1,11 +1,14 @@
 #[path = "./args.rs"] mod args;
+#[path = "./dir.rs"] mod dir;
 use std::collections::hash_map::DefaultHasher;
-use std::fs::{File, metadata};
+use std::fs::{File, metadata, OpenOptions};
 use std::hash::{Hasher, Hash};
 use std::io::{Read, Write, Seek, SeekFrom};
 use std::path::{PathBuf, Path};
 use args::components::{parse_commands, Args, CompletedCommand, Param};
+use chrono::{DateTime, Local, Utc};
 
+use self::dir::{DirEntryFiles, collect_files};
 
 pub struct Application;
 
@@ -25,10 +28,7 @@ impl Application {
             Ok(path) => path,
             Err(error) => panic!("{}", error)
         };
-
-        
-
-        
+        Application::is_make_snap_action(&mut args, PathBuf::from(dir).as_path());
         // snapshot -d <<path to dir for snap>>  
         // snapshot -s <<path wo work dir>>
         // snapshot -c <<snap1>> <<snap2>>
@@ -37,9 +37,54 @@ impl Application {
         //Application::create_snaps_folder(&dir, &temp).unwrap();
     }
 
-    fn is_change_work_dir_action(args: &mut Args, work_dir_file: &mut File) {
+    fn is_make_snap_action(args: &mut Args, work_dir: &Path) {
 
         match args.iter().find(|arg| arg.key == "-s") {
+            Some(arg) => {
+                match &arg.param{
+                    Param::With(param) => {
+                        match std::fs::metadata(param.as_str()) {
+                            Ok(_) => {
+                                let complete_path = Application::create_snaps_folder(work_dir, param);
+                                let local_data: DateTime<Local> = Utc::now().with_timezone(&Local);
+                                let snap_name = local_data.time()
+                                                          .to_string()
+                                                          .chars().map(|symbol| match symbol {
+                                                            ':' => '.',
+                                                            _   => symbol
+                                                          }).collect::<String>();
+
+                                println!("{}", complete_path.join(snap_name.as_str()).display());
+
+                                match OpenOptions::new()
+                                                .create(true)
+                                                .write(true)
+                                                .open(complete_path.join(snap_name.as_str())) 
+                                                {
+                                                    Ok(mut file) => {
+                                                        let mut dir_entry = DirEntryFiles::new_dir(
+                                                                            PathBuf::from(param.as_str()).file_name().unwrap().to_os_string());
+                                                        collect_files(std::fs::read_dir(PathBuf::from(param.as_str())).unwrap(), &mut dir_entry);
+
+                                                        dir_entry.write_to_file(&mut file);
+                                                        dir_entry.debug_files(0, 3);
+                                                    },
+                                                    Err(error) => panic!("File open error")
+                                                }
+                            },
+                            Err(_) => panic!("Invalid dir path")
+                        }
+                    },
+                    Param::Without => panic!("Invalid snap path. Use -s 'path'")
+                }
+            }
+            None => {}
+        }
+    }
+
+    fn is_change_work_dir_action(args: &mut Args, work_dir_file: &mut File) {
+
+        match args.iter().find(|arg| arg.key == "-d") {
             Some(arg) => {
                 match &arg.param {
                     Param::With(arg_path) => {
@@ -49,10 +94,10 @@ impl Application {
                                 work_dir_file.write_all(arg_path.as_bytes()).expect("Error write new work path to file");
                                 work_dir_file.seek(SeekFrom::Start(0));
                             },
-                            Err(_) => panic!("Invalid file path. Use -s 'path'")
+                            Err(_) => panic!("Invalid file path. Use -d 'path'")
                         }
                     },
-                    Param::Without => panic!("Arg -s needs a path. Use -s 'path'")
+                    Param::Without => panic!("Arg -s needs a path. Use -d 'path'")
                 }
             },
             None => {}
@@ -64,7 +109,6 @@ impl Application {
         let file_try_find = Application::check_config_file();
 
         let file = match file_try_find {
-
             Ok(file_r) => file_r,
             Err(error) => {
                 match error.kind() {
@@ -130,13 +174,21 @@ impl Application {
         }
     }
 
-    fn create_snaps_folder(work_dir: &String, snap_folder_path: &String) -> std::io::Result<()> {
+    fn create_snaps_folder(work_dir: &Path, snap_folder_path: &String) -> PathBuf {
 
         let mut hasher = DefaultHasher::default();
         snap_folder_path.hash(&mut hasher);
         let hash_r = hasher.finish();
-        let complete_path = Path::new(work_dir.as_str()).join(hash_r.to_string());
-        std::fs::create_dir(complete_path)
+        let complete_path = Path::new(work_dir).join(hash_r.to_string());
+        match std::fs::create_dir(complete_path.as_path()) {
+            Ok(_) => complete_path,
+            Err(error) => {
+                match error.kind() {
+                    std::io::ErrorKind::AlreadyExists => complete_path,
+                    _ => panic!("Create snap dir error")
+                }
+            }
+        }
     }
 
     fn help() {
