@@ -5,7 +5,7 @@ pub mod components {
     pub enum Param {
         
         With(String),
-        Without
+        Without 
     }
 
     pub type Key = String;
@@ -13,8 +13,8 @@ pub mod components {
     #[derive(Debug, Clone)]
     pub struct CompletedCommand {
 
-        key: Key,
-        param: Param
+        pub key: Key,
+        pub param: Param
     }
 
     pub type Args = Vec::<CompletedCommand>;
