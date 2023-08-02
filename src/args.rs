@@ -3,7 +3,7 @@ pub mod components {
 
     #[derive(Debug, Clone)]
     pub enum Param {
-        
+        WithTwo(String, String),
         With(String),
         Without 
     }
@@ -36,15 +36,10 @@ pub mod components {
         for index in 0..args.len() {
 
             match key_check(args[index].as_str()) {
-
                 true => {
-
                     match args.get(index + 1) {
-
                         Some(next_arg) => {
-
                             match next_arg.chars().next().unwrap() {
-
                                 '-' => {
                                     compl_comands.push(
                                         CompletedCommand { 
@@ -54,12 +49,37 @@ pub mod components {
                                     )
                                 },
                                  _  => {
-                                    compl_comands.push(
-                                        CompletedCommand { 
-                                            key: args[index].clone(), 
-                                            param: Param::With(next_arg.clone()) 
+                                    match args.get(index + 2) {
+                                        Some(next_arg2) => {
+                                            match next_arg2.chars().next().unwrap() {
+
+                                                '-' => {
+                                                    compl_comands.push(
+                                                        CompletedCommand { 
+                                                            key: args[index].clone(), 
+                                                            param: Param::With(next_arg.clone()) 
+                                                        }
+                                                    )
+                                                },
+                                                 _ => {
+                                                    compl_comands.push(
+                                                        CompletedCommand { 
+                                                            key: args[index].clone(), 
+                                                            param: Param::WithTwo(next_arg.clone(), next_arg2.clone()) 
+                                                        }
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        None => {
+                                            compl_comands.push(
+                                                CompletedCommand { 
+                                                    key: args[index].clone(), 
+                                                    param: Param::With(next_arg.clone()) 
+                                                }
+                                            )
                                         }
-                                    )
+                                    }
                                 }
                             }
                         },
@@ -82,7 +102,6 @@ pub mod components {
     pub fn key_check(key: &str) -> bool {
 
         match key.chars().next() {
-
             Some(ch) => {
                 match ch {
                     '-' => true,
