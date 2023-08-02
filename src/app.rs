@@ -7,8 +7,8 @@ use std::io::{Read, Write, Seek, SeekFrom};
 use std::path::{PathBuf, Path};
 use args::components::{parse_commands, Args, CompletedCommand, Param};
 use chrono::{DateTime, Local, Utc};
-
 use self::dir::{DirEntryFiles, collect_files};
+
 
 pub struct Application;
 
@@ -29,12 +29,25 @@ impl Application {
             Err(error) => panic!("{}", error)
         };
         Application::is_make_snap_action(&mut args, PathBuf::from(dir).as_path());
+        
+
         // snapshot -d <<path to dir for snap>>  
         // snapshot -s <<path wo work dir>>
         // snapshot -c <<snap1>> <<snap2>>
 
         //let temp = String::from("folder");
         //Application::create_snaps_folder(&dir, &temp).unwrap();
+    }
+
+    fn is_compare_snaps_actions(args: &mut Args, snaps: (&DirEntryFiles, &DirEntryFiles)) {
+
+        match args.iter().find(|arg| arg.key == "-c") {
+            Some(compare_action) => {
+
+
+            }
+            None => {}
+        }
     }
 
     fn is_make_snap_action(args: &mut Args, work_dir: &Path) {
@@ -75,6 +88,7 @@ impl Application {
                             Err(_) => panic!("Invalid dir path")
                         }
                     },
+                    Param::WithTwo(_, _) => panic!("Arg -s need only one param. Use Use -s 'path'"),
                     Param::Without => panic!("Invalid snap path. Use -s 'path'")
                 }
             }
@@ -97,6 +111,7 @@ impl Application {
                             Err(_) => panic!("Invalid file path. Use -d 'path'")
                         }
                     },
+                    Param::WithTwo(_, _) => panic!("Arg -s need only one param. Use -d 'path"),
                     Param::Without => panic!("Arg -s needs a path. Use -d 'path'")
                 }
             },
