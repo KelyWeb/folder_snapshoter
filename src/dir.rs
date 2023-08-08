@@ -250,10 +250,13 @@ pub fn add_output_line_mod(output: &mut String, tabs: (usize, usize), files: (&D
             if let DirEntryFiles::File(file_name_sub, file_size_sub) = files.1 {
                 if *file_size == *file_size_sub {
                     line.push_str(file_size.to_string().as_str());
+                    line.push_str(" Bytes");
                 } else {
                     line.push_str(file_size.to_string().as_str());
+                    line.push_str(" Bytes");
                     line.push_str(" -> ");
                     line.push_str(file_size_sub.to_string().as_str());
+                    line.push_str(" Bytes");
                 }
             }
         }
