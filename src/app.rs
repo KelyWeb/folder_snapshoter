@@ -1,13 +1,15 @@
 #[path = "./args.rs"] mod args;
 #[path = "./dir.rs"] mod dir;
 use std::collections::hash_map::DefaultHasher;
+use std::ffi::OsStr;
 use std::fs::{File, metadata, OpenOptions};
 use std::hash::{Hasher, Hash};
 use std::io::{Read, Write, Seek, SeekFrom};
 use std::path::{PathBuf, Path};
 use args::components::{parse_commands, Args, CompletedCommand, Param};
 use chrono::{DateTime, Local, Utc};
-use self::dir::{DirEntryFiles, collect_files};
+use dir::{DirEntryFiles, collect_files, compare_root_dirs, add_root_dir, compare_snaps};
+
 
 
 pub struct Application;
@@ -29,8 +31,7 @@ impl Application {
             Err(error) => panic!("{}", error)
         };
         Application::is_make_snap_action(&mut args, PathBuf::from(dir).as_path());
-        
-
+        Application::is_compare_snaps_actions(&mut args);
         // snapshot -d <<path to dir for snap>>  
         // snapshot -s <<path wo work dir>>
         // snapshot -c <<snap1>> <<snap2>>
@@ -39,15 +40,52 @@ impl Application {
         //Application::create_snaps_folder(&dir, &temp).unwrap();
     }
 
-    fn is_compare_snaps_actions(args: &mut Args, snaps: (&DirEntryFiles, &DirEntryFiles)) {
+    fn is_compare_snaps_actions(args: &mut Args) {
 
         match args.iter().find(|arg| arg.key == "-c") {
             Some(compare_action) => {
-
-
+                match &compare_action.param {
+                    Param::WithTwo(first, second) => {
+                        let metadata_snap1 = std::fs::metadata(first.as_str())
+                                                        .expect("Snap1 invalid path");
+                        let metadata_snap2 = std::fs::metadata(first.as_str())
+                                                        .expect("Snap2 invalid path");
+                        if !metadata_snap1.is_file() && !metadata_snap2.is_file() {
+                            panic!("Snap must be a file");
+                        }
+                        let snaps = Application::load_snaps(
+                                                            PathBuf::from(first.as_str()).as_path(), 
+                                                            PathBuf::from(second.as_str()).as_path());
+                        let mut compare_output_result = String::new();
+                        if !compare_root_dirs((&snaps.0, &snaps.1)) {
+                            panic!("Root dir aren't the same");
+                        }
+                        add_root_dir(&mut compare_output_result, &snaps.0);
+                        compare_snaps((&snaps.0, &snaps.1), (3, 3), &mut compare_output_result);
+                        println!("{}", compare_output_result);
+                    }
+                    Param::With(_) => panic!("Use -c arg with two aprams. -c <snap1 path> <snap2 path>"),
+                    Param::Without => panic!("Use -c arg with two aprams. -c <snap1 path> <snap2 path>")
+                }
             }
             None => {}
         }
+    }
+
+    fn load_snaps(snap1: &Path, snap2: &Path) -> (DirEntryFiles, DirEntryFiles) {
+
+        let mut snaps: (DirEntryFiles, DirEntryFiles) = (DirEntryFiles::new(), DirEntryFiles::new());
+        let mut snap1_file = OpenOptions::new()
+                                        .read(true)
+                                        .open(snap1)
+                                        .expect("File open error");
+        let mut snap2_file = OpenOptions::new()
+                                        .read(true)
+                                        .open(snap2)
+                                        .expect("File open error");
+        snaps.0 = DirEntryFiles::read_from_file(&mut snap1_file);
+        snaps.1 = DirEntryFiles::read_from_file(&mut snap2_file);
+        snaps
     }
 
     fn is_make_snap_action(args: &mut Args, work_dir: &Path) {
@@ -88,8 +126,8 @@ impl Application {
                             Err(_) => panic!("Invalid dir path")
                         }
                     },
-                    Param::WithTwo(_, _) => panic!("Arg -s need only one param. Use Use -s 'path'"),
-                    Param::Without => panic!("Invalid snap path. Use -s 'path'")
+                    Param::WithTwo(_, _) => panic!("Use -s arg with one param. Use -s <path>"),
+                    Param::Without => panic!("Invalid snap path. Use -s <path>")
                 }
             }
             None => {}
