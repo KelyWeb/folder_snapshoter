@@ -32,12 +32,6 @@ impl Application {
         };
         Application::is_make_snap_action(&mut args, PathBuf::from(dir).as_path());
         Application::is_compare_snaps_actions(&mut args);
-        // snapshot -d <<path to dir for snap>>  
-        // snapshot -s <<path wo work dir>>
-        // snapshot -c <<snap1>> <<snap2>>
-
-        //let temp = String::from("folder");
-        //Application::create_snaps_folder(&dir, &temp).unwrap();
     }
 
     fn is_compare_snaps_actions(args: &mut Args) {
