@@ -114,34 +114,33 @@ pub mod components {
 }
 
 #[cfg(test)]
-#[test]
-fn test_parse_with_all_valid_args() {
-    use self::components::parse_commands;
-    use self::components::{CompletedCommand, Key, Param};
-    
-    let args = vec![String::from("-r"),
-                                 String::from("-t"),
-                                 String::from("one"),
-                                 String::from("two"),
-                                 String::from("ignored"),
-                                 String::from("-t"),
-                                 String::from("one"),];
-    let parse_result = parse_commands(args);
-    let parse_vector = vec![CompletedCommand {key: Key::from("-r"), param: Param::Without},
-                                                CompletedCommand {key: Key::from("-t"), param: Param::WithTwo(String::from("one"), 
-                                                                                                              String::from("two"))},
-                                                CompletedCommand {key: Key::from("-t"), param: Param::With(String::from("one"))}];
-    assert_eq!(parse_result, parse_vector);
-}
-#[test]
-fn test_parse_without_valid_args() {
-    use self::components::parse_commands;
-    use self::components::{CompletedCommand};
-    
-    let args = vec![String::from("one"),
-                    String::from("two"),
-                    String::from("one"),
-                    String::from("two")]; 
-    let result_parse = parse_commands(args);
-    assert_eq!(result_parse, Vec::<CompletedCommand>::new());
+mod args_tests {
+    use super::components::parse_commands;
+    use super::components::{CompletedCommand, Key, Param};
+        
+    #[test]
+    fn test_parse_with_all_valid_args() {
+        let args = vec![String::from("-r"),
+                                    String::from("-t"),
+                                    String::from("one"),
+                                    String::from("two"),
+                                    String::from("ignored"),
+                                    String::from("-t"),
+                                    String::from("one"),];
+        let parse_result = parse_commands(args);
+        let parse_vector = vec![CompletedCommand {key: Key::from("-r"), param: Param::Without},
+                                                    CompletedCommand {key: Key::from("-t"), param: Param::WithTwo(String::from("one"), 
+                                                                                                                String::from("two"))},
+                                                    CompletedCommand {key: Key::from("-t"), param: Param::With(String::from("one"))}];
+        assert_eq!(parse_result, parse_vector);
+    }
+    #[test]
+    fn test_parse_without_valid_args() {
+        let args = vec![String::from("one"),
+                        String::from("two"),
+                        String::from("one"),
+                        String::from("two")]; 
+        let result_parse = parse_commands(args);
+        assert_eq!(result_parse, Vec::<CompletedCommand>::new());
+    }
 }
