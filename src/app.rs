@@ -11,7 +11,7 @@ use chrono::{DateTime, Local, Utc};
 use dir::{DirEntryFiles, collect_files, compare_root_dirs, add_root_dir, compare_snaps};
 
 
-
+pub const CONFIG_FILE: &str = "./config";
 pub struct Application;
 
 impl Application {
@@ -170,7 +170,7 @@ impl Application {
                         File::options()
                             .read(true)
                             .write(true)
-                            .open("./config")
+                            .open(CONFIG_FILE)
                             .expect("Open config file error")
                     },
                     _ => panic!("{}", error)
@@ -185,7 +185,7 @@ impl Application {
         let file_r = File::options()
                     .read(true)
                     .write(true)
-                    .open("./config");
+                    .open(CONFIG_FILE);
         match file_r {
             Ok(file) => Ok(file),
             Err(err) => Err(err)
