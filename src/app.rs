@@ -245,6 +245,10 @@ impl Application {
     }
 
     fn help() {
-
+        println!("File snapshoter");
+        println!("Use cases:");
+        println!("snapshot -d <<path to dir for snap>> - make snap");
+        println!("snapshot -s <<path to work dir>> - set dir to save snaps");
+        println!("snapshot -c <<snap1>> <<snap2>> - compare two snaps");  
     }
 }
