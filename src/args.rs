@@ -121,17 +121,17 @@ mod args_tests {
     #[test]
     fn test_parse_with_all_valid_args() {
         let args = vec![String::from("-r"),
-                                    String::from("-t"),
-                                    String::from("one"),
-                                    String::from("two"),
-                                    String::from("ignored"),
-                                    String::from("-t"),
-                                    String::from("one"),];
+                        String::from("-t"),
+                        String::from("one"),
+                        String::from("two"),
+                        String::from("ignored"),
+                        String::from("-t"),
+                        String::from("one"),];
         let parse_result = parse_commands(args);
         let parse_vector = vec![CompletedCommand {key: Key::from("-r"), param: Param::Without},
-                                                    CompletedCommand {key: Key::from("-t"), param: Param::WithTwo(String::from("one"), 
-                                                                                                                String::from("two"))},
-                                                    CompletedCommand {key: Key::from("-t"), param: Param::With(String::from("one"))}];
+                                CompletedCommand {key: Key::from("-t"), param: Param::WithTwo(String::from("one"), 
+                                                                                            String::from("two"))},
+                                CompletedCommand {key: Key::from("-t"), param: Param::With(String::from("one"))}];
         assert_eq!(parse_result, parse_vector);
     }
     #[test]
