@@ -16,6 +16,7 @@ pub struct Application;
 
 impl Application {
 
+    #[cfg(not(tarpaulin_include))]
     pub fn start(args_c: Vec<String>) {
 
         let mut args = parse_commands(args_c);
@@ -32,12 +33,6 @@ impl Application {
         };
         Application::is_make_snap_action(&mut args, PathBuf::from(dir).as_path());
         Application::is_compare_snaps_actions(&mut args);
-        // snapshot -d <<path to dir for snap>>  
-        // snapshot -s <<path wo work dir>>
-        // snapshot -c <<snap1>> <<snap2>>
-
-        //let temp = String::from("folder");
-        //Application::create_snaps_folder(&dir, &temp).unwrap();
     }
 
     fn is_compare_snaps_actions(args: &mut Args) {
@@ -248,3 +243,40 @@ impl Application {
 
     }
 }
+
+#[cfg(test)]
+mod app_tests {
+    use std::fs::File;
+    use super::args::components::CompletedCommand;
+    use super::args::components::{Args, Key, Param};
+    use super::Application;
+
+    #[test]
+    #[should_panic]
+    fn test_change_dir_work_action() {
+        let mut file = File::open("./config").unwrap();
+        let mut args = Args::new();
+        let command = CompletedCommand{key: Key::from("-d"), param: Param::Without};
+        args.push(command);
+        Application::is_change_work_dir_action(&mut args, &mut file);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_make_snap_action() {
+        let mut args = Args::new();
+        let command = CompletedCommand{key: Key::from("-s"), param: Param::Without};
+        args.push(command);
+        Application::is_make_snap_action(&mut args, std::path::PathBuf::from("./").as_path());
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_compare_snaps_actions() {
+        let mut args = Args::new();
+        let command = CompletedCommand{key: Key::from("-c"), param: Param::Without};
+        args.push(command);
+        Application::is_compare_snaps_actions(&mut args);
+    }
+}
+
