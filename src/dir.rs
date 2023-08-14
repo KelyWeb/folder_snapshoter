@@ -164,7 +164,7 @@ pub fn compare_snaps(snaps: (&DirEntryFiles, &DirEntryFiles), tabs: (usize, usiz
         files.iter().collect::<LinkedList<_>>()
     } else { LinkedList::new() };
 
-    for file in snap1_list {
+    for file in &snap1_list {
         if let DirEntryFiles::File(f_name, f_size) = file {
             match search_match(&snap2_list, file) {
                 Some(file_dup) => {
@@ -182,6 +182,25 @@ pub fn compare_snaps(snaps: (&DirEntryFiles, &DirEntryFiles), tabs: (usize, usiz
                 },
                 None => {
                     add_output_line_deleted(output, tabs, file);
+                    compare_snaps((file, &DirEntryFiles::new()), (tabs.0 + 3, tabs.1 + 3), output);
+                }
+            }
+        }
+    }
+
+    for file in &snap2_list {
+        if let DirEntryFiles::File(f_name, f_size) = file {
+            match search_match(&snap1_list, file) {
+                Some(file_dup) => {},
+                None => {
+                    add_output_line_new(output, tabs, file);
+                }
+            }
+        } else {
+            match search_match(&snap1_list, file) {
+                Some(file_dup) => {},
+                None => {
+                    add_output_line_new(output, tabs, file);
                     compare_snaps((file, &DirEntryFiles::new()), (tabs.0 + 3, tabs.1 + 3), output);
                 }
             }
