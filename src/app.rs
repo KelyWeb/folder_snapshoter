@@ -67,6 +67,7 @@ impl Application {
         }
     }
 
+    #[cfg(not(tarpaulin_include))]
     fn load_snaps(snap1: &Path, snap2: &Path) -> (DirEntryFiles, DirEntryFiles) {
 
         let mut snaps: (DirEntryFiles, DirEntryFiles) = (DirEntryFiles::new(), DirEntryFiles::new());
@@ -222,6 +223,7 @@ impl Application {
         }
     }
 
+    #[cfg(not(tarpaulin_include))]
     fn create_snaps_folder(work_dir: &Path, snap_folder_path: &String) -> PathBuf {
 
         let mut hasher = DefaultHasher::default();
