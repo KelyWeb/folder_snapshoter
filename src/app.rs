@@ -1,7 +1,6 @@
 #[path = "./args.rs"] mod args;
 #[path = "./dir.rs"] mod dir;
 use std::collections::hash_map::DefaultHasher;
-use std::ffi::OsStr;
 use std::fs::{File, metadata, OpenOptions};
 use std::hash::{Hasher, Hash};
 use std::io::{Read, Write, Seek, SeekFrom};
@@ -56,12 +55,30 @@ impl Application {
                         }
                         add_root_dir(&mut compare_output_result, &snaps.0);
                         compare_snaps((&snaps.0, &snaps.1), (3, 3), &mut compare_output_result);
+                        Application::is_save_compare_result(args, &compare_output_result);
                         println!("{}", compare_output_result);
                     }
                     Param::With(_) => panic!("Use -c arg with two aprams. -c <snap1 path> <snap2 path>"),
                     Param::Without => panic!("Use -c arg with two aprams. -c <snap1 path> <snap2 path>")
                 }
             }
+            None => {}
+        }
+    }
+
+    fn is_save_compare_result(args: &mut Args, output: &String) {
+
+        match args.iter().find(|arg| arg.key == "-b") {
+            Some(arg) => {
+                match arg.param {
+                    Param::Without => {
+                        let mut output_file = OpenOptions::new().create(true).write(true).truncate(true).open("compare_output.txt").expect("Open file error");
+                        output_file.write_all(output.as_bytes()).unwrap();
+                    },
+                    Param::With(_) => panic!("Use -b without params."),
+                    Param::WithTwo(_, _) => panic!("Use -b without params.")
+                }
+            },
             None => {}
         }
     }
