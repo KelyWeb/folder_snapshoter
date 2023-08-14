@@ -155,6 +155,7 @@ pub fn compare_root_dirs(snaps: (&DirEntryFiles, &DirEntryFiles)) -> bool {
     false
 }
 
+
 pub fn compare_snaps(snaps: (&DirEntryFiles, &DirEntryFiles), tabs: (usize, usize), output: &mut String) {
 
     let snap1_list = if let DirEntryFiles::Dir { name, files } = snaps.0 {
@@ -224,6 +225,7 @@ fn compare_files(file1: &DirEntryFiles, file2: &DirEntryFiles) -> bool {
     false
 }
 
+#[cfg(not(tarpaulin_include))]
 pub fn add_output_line_mod(output: &mut String, tabs: (usize, usize), files: (&DirEntryFiles,&DirEntryFiles)) {
 
     let mut line = String::new();
@@ -265,6 +267,7 @@ pub fn add_output_line_mod(output: &mut String, tabs: (usize, usize), files: (&D
     output.push_str(line.as_str());
 }
 
+#[cfg(not(tarpaulin_include))]
 pub fn add_output_line_new(output: &mut String, tabs: (usize, usize), file: &DirEntryFiles) {
 
     let mut line = String::new();
@@ -295,6 +298,7 @@ pub fn add_output_line_new(output: &mut String, tabs: (usize, usize), file: &Dir
     output.push_str(line.as_str());
 }
 
+#[cfg(not(tarpaulin_include))]
 pub fn add_output_line_deleted(output: &mut String, tabs: (usize, usize), file: &DirEntryFiles) {
 
     let mut line = String::new();
@@ -325,9 +329,72 @@ pub fn add_output_line_deleted(output: &mut String, tabs: (usize, usize), file: 
     output.push_str(line.as_str());
 }
 
+#[cfg(not(tarpaulin_include))]
 pub fn add_root_dir(output: &mut String, dir: &DirEntryFiles) {
     if let DirEntryFiles::Dir { name, files } = dir {
         output.push_str(name.to_str().unwrap());
         output.push('\n');
+    }
+}
+
+#[cfg(test)]
+mod dir_tests {
+    use crate::app::dir::{compare_root_dirs, compare_files, search_match};
+    use super::DirEntryFiles;
+    use std::{ffi::OsString, collections::LinkedList};
+
+    #[test]
+    fn test_eq_operator() {
+        let dir_new = DirEntryFiles::new();
+        let dir = DirEntryFiles::Dir { name: OsString::from("dir"), files:  Vec::new()};
+        let dir2 = DirEntryFiles::Dir { name: OsString::from("dir2"), files:  Vec::new()};
+        let file = DirEntryFiles::File(OsString::from("File"), 1024);
+        let file2 = DirEntryFiles::File(OsString::from("File2"), 1024);
+        assert_eq!(dir_new, DirEntryFiles::Dir { name: OsString::default(), files: Vec::new()});
+        assert_eq!(dir, dir2);
+        assert_eq!(file, file2);
+        assert_ne!(dir, file);
+    }
+    #[test]
+    fn test_add_file_and_dir() {
+        let mut dir = DirEntryFiles::new_dir(OsString::from("Dir"));
+        dir.add_file_to_dir((OsString::from("File"), 1024));
+        dir.add_dir_to_dir(DirEntryFiles::new_dir(OsString::from("Dir2")));
+        let mut dir_eq = DirEntryFiles::Dir { name: OsString::from("Dir"), files: Vec::new() };
+        dir_eq.add_file_to_dir((OsString::from("File"), 1024));
+        dir_eq.add_dir_to_dir(DirEntryFiles::new_dir(OsString::from("Dir2")));
+        assert_eq!(dir, dir_eq);
+    }
+    #[test]
+    fn test_compare_root() {
+        let dir1 = DirEntryFiles::new_dir(OsString::from("Dir"));
+        let dir2 = DirEntryFiles::new_dir(OsString::from("Dir"));
+        let dir3 = DirEntryFiles::new_dir(OsString::from("Dir3"));
+        assert!(compare_root_dirs((&dir1, &dir2)) == true);
+        assert!(compare_root_dirs((&dir1, &dir3)) == false);
+    }
+
+    #[test]
+    fn test_compare_files() {
+        let dir1 = DirEntryFiles::new_dir(OsString::from("dir1"));
+        let dir2 = DirEntryFiles::new_dir(OsString::from("dir1"));
+        let dir3 = DirEntryFiles::new_dir(OsString::from("dir3"));
+        let file1 = DirEntryFiles::new_file(OsString::from("file1"), 1024);
+        let file2 = DirEntryFiles::new_file(OsString::from("file1"), 1024);
+        let file3 = DirEntryFiles::new_file(OsString::from("file3"), 1024);
+        assert_eq!(true, compare_files(&dir1, &dir2));
+        assert_eq!(false, compare_files(&dir1, &dir3));
+        assert_eq!(true, compare_files(&file1, &file2));
+        assert_eq!(false, compare_files(&file1, &file3));
+    }
+
+    #[test]
+    fn test_search_match() {
+        let mut files_list = LinkedList::<&DirEntryFiles>::new();
+        let file = DirEntryFiles::new_file(OsString::from("File1"), 1024);
+        let file2 = DirEntryFiles::new_file(OsString::from("File2"), 1024);
+        files_list.push_back(&file);
+        assert_eq!(Some(&file), search_match(&files_list, &file));
+        assert_eq!(None, search_match(&files_list, &file2));
     }
 }
